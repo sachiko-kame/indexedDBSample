@@ -30,16 +30,30 @@ function addData(value) {
     };
     request.onsuccess = function(event) {
         var db = event.target.result;
-        var customerObjectStore = db.transaction(objectName, "readwrite").objectStore(objectName);
-        customerObjectStore.add(customerData[value - 1]);
-        allGetData();
-
+        var index = db.transaction(objectName, "readwrite").objectStore(objectName).index("name");
+        index.get(customerData[value - 1].name).onerror = function(event) {
+            db.close();
+            alert('インデックス取得失敗');
+        }
+        index.get(customerData[value - 1].name).onsuccess = function(event) {
+            if (event.target.result === undefined) {
+                var customerObjectStore = db.transaction(objectName, "readwrite").objectStore(objectName);
+                customerObjectStore.add(customerData[value - 1]);
+                allGetData();
+            } else {
+                db.close();
+            }
+        }
     };
     request.onupgradeneeded = function(event) {
         var db = event.target.result;
         var objectStore = db.createObjectStore(objectName, {
-            keyPath: "name"
+            keyPath: 'my_id',
+            autoIncrement: true
         });
+        objectStore.createIndex("name", "name", {
+            unique: true
+        }); //本来は名前はuniqueってことはないと思います！
     };
 }
 
@@ -64,45 +78,68 @@ function allGetData() {
     request.onupgradeneeded = function(event) {
         var db = event.target.result;
         var objectStore = db.createObjectStore(objectName, {
-            keyPath: "name"
+            keyPath: 'my_id',
+            autoIncrement: true
         });
+        objectStore.createIndex("name", "name", {
+            unique: true
+        }); //本来は名前はuniqueってことはないと思います！
     };
 }
 
-function deleateData(value){
-  var request = window.indexedDB.open(deName, 3);
-  request.onerror = function(event) {
-      alert('DBのアクセスに失敗');
-  };
-  request.onsuccess = function(event) {
-      var db = event.target.result;
-      var customerObjectStoreRequest = db.transaction(objectName, "readwrite").objectStore(objectName).delete(customerData[value - 1].name);
-      customerObjectStoreRequest.onerror = function(event) {
-          db.close();
-          alert('オブジェクト削除失敗');
-      };
-      customerObjectStoreRequest.onsuccess = function(event) {
-        db.close();
-        allGetData();
-      }
-  };
-  request.onupgradeneeded = function(event) {
-      var db = event.target.result;
-      var objectStore = db.createObjectStore(objectName, {
-          keyPath: "name"
-      });
-  };
+function deleateData(value) {
+    var request = window.indexedDB.open(deName, 3);
+    request.onerror = function(event) {
+        alert('DBのアクセスに失敗');
+    };
+    request.onsuccess = function(event) {
+        var db = event.target.result;
+
+        var index = db.transaction(objectName, "readwrite").objectStore(objectName).index("name");
+        index.get(customerData[value - 1].name).onerror = function(event) {
+            db.close();
+            alert('インデックス取得失敗');
+        }
+        index.get(customerData[value - 1].name).onsuccess = function(event) {
+            if (event.target.result === undefined) {
+                db.close();
+            } else {
+                console.log(event.target.result);
+                var customerObjectStoreRequest = db.transaction(objectName, "readwrite").objectStore(objectName).delete(event.target.result.my_id);
+                customerObjectStoreRequest.onerror = function(event) {
+                    db.close();
+                    alert('オブジェクト削除失敗');
+                };
+                customerObjectStoreRequest.onsuccess = function(event) {
+                    db.close();
+                    allGetData();
+                }
+            }
+
+        };
+    };
+    request.onupgradeneeded = function(event) {
+        var db = event.target.result;
+        var objectStore = db.createObjectStore(objectName, {
+            keyPath: 'my_id',
+            autoIncrement: true
+        });
+        objectStore.createIndex("name", "name", {
+            unique: true
+        }); //本来は名前はuniqueってことはないと思います！
+
+    };
 }
 
 function dataShow(values) {
     const num = values.length;
     const target = document.getElementById('output');
 
-    if(num === 0){
-      target.innerHTML = '<p>データがありません</p>';
-    }else{
-      const map1 = values.map(item => JSON.stringify(item));
-      let li = '<ul><li>' + map1.join('</li><li>') + '</li></ul>'
-      target.innerHTML = li;
+    if (num === 0) {
+        target.innerHTML = '<p>データがありません</p>';
+    } else {
+        const map1 = values.map(item => JSON.stringify(item));
+        let li = '<ul><li>' + map1.join('</li><li>') + '</li></ul>'
+        target.innerHTML = li;
     }
 }
