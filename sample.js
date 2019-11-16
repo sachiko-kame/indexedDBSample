@@ -1,6 +1,6 @@
 "use strict";
 
-const deName = 'sampleDB'
+const dbName = 'sampleDB'
 const objectName = 'humans'
 
 const customerData = [{
@@ -24,7 +24,7 @@ function allAddData() {
 }
 
 function addData(value) {
-    var request = window.indexedDB.open(deName, 3);
+    var request = window.indexedDB.open(dbName);
     request.onerror = function(event) {
         alert('DBのアクセスに失敗');
     };
@@ -58,7 +58,7 @@ function addData(value) {
 }
 
 function allGetData() {
-    var request = window.indexedDB.open(deName, 3);
+    var request = window.indexedDB.open(dbName);
     request.onerror = function(event) {
         alert('DBのアクセスに失敗');
     };
@@ -88,7 +88,7 @@ function allGetData() {
 }
 
 function deleateData(value) {
-    var request = window.indexedDB.open(deName, 3);
+    var request = window.indexedDB.open(dbName);
     request.onerror = function(event) {
         alert('DBのアクセスに失敗');
     };
